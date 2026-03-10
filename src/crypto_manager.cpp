@@ -113,12 +113,22 @@ bool CryptoManager::encryptFile(const QString &filePath, const QString &password
 {
     QFile in(filePath);
     if (!in.open(QIODevice::ReadOnly)) {
+        qWarning() << "Cannot read file:" << filePath;
         return false;
     }
 
     const QByteArray plain = in.readAll();
     in.close();
 
+
+    if (plain.isEmpty()) {
+        qWarning() << "Empty file, skipping encryption";
+        return true;
+    }
+    if (isEncryptedFile(filePath)) {
+        qInfo() << "File already encrypted:" << filePath;
+        return true;  // Считаем успешным, просто пропускаем
+    }
     CryptoPP::AutoSeededRandomPool prng;
     CryptoPP::SecByteBlock salt(kSaltSize);
     CryptoPP::SecByteBlock iv(kIvSize);
@@ -127,6 +137,7 @@ bool CryptoManager::encryptFile(const QString &filePath, const QString &password
 
     CryptoPP::SecByteBlock key;
     if (!deriveKeyFromPassword(password, salt, salt.size(), key)) {
+        qWarning() << "Key derivation failed";
         return false;
     }
 
@@ -135,18 +146,34 @@ bool CryptoManager::encryptFile(const QString &filePath, const QString &password
         CryptoPP::GCM<CryptoPP::AES>::Encryption enc;
         enc.SetKeyWithIV(key, key.size(), iv, iv.size());
 
-        std::string out;
-        CryptoPP::AuthenticatedEncryptionFilter aef(enc,
-                                                    new CryptoPP::StringSink(out),
-                                                    false,
-                                                    kTagSize);
+        // 1. Выделяем память под шифротекст
+        std::string ciphertext(plain.size(), '\0');
 
-        aef.Put(reinterpret_cast<const CryptoPP::byte *>(plain.constData()),
-                static_cast<size_t>(plain.size()));
-        aef.MessageEnd();
+        // 2. Шифруем данные напрямую
+        enc.ProcessData(
+            reinterpret_cast<CryptoPP::byte*>(&ciphertext[0]),
+            reinterpret_cast<const CryptoPP::byte*>(plain.constData()),
+            static_cast<size_t>(plain.size()));
 
-        cipherPlusTag = QByteArray::fromStdString(out);
+        // 3. Получаем тег аутентификации
+        CryptoPP::byte tag[kTagSize];
+        enc.TruncatedFinal(tag, kTagSize);
+
+        // 4. Склеиваем шифротекст и тег
+        cipherPlusTag = QByteArray::fromStdString(ciphertext) +
+                        QByteArray(reinterpret_cast<char*>(tag), kTagSize);
+
+
+    } catch (const CryptoPP::Exception& e) {
+        qWarning() << "Crypto++ Exception:" << e.what();
+        return false;
     } catch (...) {
+        qWarning() << "Unknown exception";
+        return false;
+    }
+
+    if (cipherPlusTag.size() != plain.size() + kTagSize) {
+        qWarning() << "Size mismatch!";
         return false;
     }
 
@@ -163,20 +190,128 @@ bool CryptoManager::encryptFile(const QString &filePath, const QString &password
     return out.commit();
 }
 
+bool CryptoManager::decryptFile(const QString &filePath, const QString &password)
+{
+    QFile in(filePath);
+    if (!in.open(QIODevice::ReadOnly)) {
+        qWarning() << "Cannot open file:" << filePath;
+        return false;
+    }
+
+    // 1. Проверка Magic
+    QByteArray magic = in.read(kMagic.size());
+    if (magic != kMagic) {
+        qWarning() << "Invalid Magic Header";
+        in.close();
+        return false;
+    }
+
+    // 2. Чтение Salt
+    CryptoPP::SecByteBlock salt(kSaltSize);
+    if (in.read(reinterpret_cast<char *>(salt.data()), kSaltSize) != kSaltSize) {
+        qWarning() << "Failed to read Salt";
+        return false;
+    }
+
+    // 3. Чтение IV
+    CryptoPP::SecByteBlock iv(kIvSize);
+    if (in.read(reinterpret_cast<char *>(iv.data()), kIvSize) != kIvSize) {
+        qWarning() << "Failed to read IV";
+        return false;
+    }
+
+    // 4. Чтение данных (шифротекст + тег)
+    QByteArray cipherPlusTag = in.readAll();
+    in.close();
+
+    if (cipherPlusTag.size() < kTagSize) {
+        qWarning() << "Data too short:" << cipherPlusTag.size();
+        return false;
+    }
+
+    // 5. Деривация ключа
+    CryptoPP::SecByteBlock key;
+    if (!deriveKeyFromPassword(password, salt, salt.size(), key)) {
+        qWarning() << "Key derivation failed";
+        return false;
+    }
+
+    // 6. Дешифрование
+    try {
+        CryptoPP::GCM<CryptoPP::AES>::Decryption dec;
+        dec.SetKeyWithIV(key, key.size(), iv, iv.size());
+
+        // Разделяем шифротекст и тег
+        std::string ciphertext = cipherPlusTag.left(cipherPlusTag.size() - kTagSize).toStdString();
+        std::string tag = cipherPlusTag.right(kTagSize).toStdString();
+
+        std::string decryptedRaw(ciphertext.size(), '\0');
+
+        // Дешифруем данные
+        dec.ProcessData(
+            reinterpret_cast<CryptoPP::byte*>(&decryptedRaw[0]),
+            reinterpret_cast<const CryptoPP::byte*>(ciphertext.data()),
+            ciphertext.size());
+
+        dec.TruncatedFinal(
+            reinterpret_cast<CryptoPP::byte*>(tag.data()),
+            kTagSize);
+
+        QByteArray plain = QByteArray::fromStdString(decryptedRaw);
+
+        // 7. Запись
+        QSaveFile outFile(filePath);
+        if (!outFile.open(QIODevice::WriteOnly)) {
+            qWarning() << "Cannot write file:" << filePath;
+            return false;
+        }
+        outFile.write(plain);
+        if (!outFile.commit()) {
+            qWarning() << "Failed to commit file:" << filePath;
+            return false;
+        }
+
+        qInfo() << "Decrypted:" << filePath;
+        return true;
+
+    } catch (const CryptoPP::Exception& e) {
+        qWarning() << "Crypto++ Exception:" << e.what();
+        qWarning() << "Possible causes: Wrong password, file corrupted, or encrypted twice";
+        return false;
+    } catch (...) {
+        qWarning() << "Unknown Exception";
+        return false;
+    }
+}
+
 bool CryptoManager::isEncryptedFile(const QString &filePath) const
 {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly))
         return false;
 
-    QByteArray header = file.read(9);
+    // 1. Проверяем размер файла
+    if (file.size() < (kMagic.size() + kSaltSize + kIvSize + kTagSize)) {
+        file.close();
+        return false;
+    }
+
+    // 2. Проверяем Magic header
+    QByteArray header = file.read(kMagic.size());
+    if (header.size() != kMagic.size() || header != kMagic) {
+        file.close();
+        return false;
+    }
+
+    QByteArray salt = file.read(kSaltSize);
+    QByteArray iv = file.read(kIvSize);
+
     file.close();
 
-    if (header.size() != 9)
+    // Если salt или iv не прочитались полностью — файл повреждён
+    if (salt.size() != kSaltSize || iv.size() != kIvSize) {
         return false;
-
-    if (header.left(8) != kMagic)
-        return false;
+    }
 
     return true;
 }
