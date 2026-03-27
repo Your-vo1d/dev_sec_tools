@@ -1,4 +1,4 @@
-﻿#ifndef ILOG_H
+#ifndef ILOG_H
 #define ILOG_H
 
 #pragma once
