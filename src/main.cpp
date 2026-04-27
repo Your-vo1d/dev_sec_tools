@@ -1,46 +1,70 @@
 ﻿#include <QCoreApplication>
+#include <QFileInfo>
 #include <QTextStream>
+#include <cstdio>
 
-#include "crypto_manager.h"
+#include "ConsoleLogger.h"
+#include "Aes256Algorithm.h"
+#include "RecursivePathStepper.h"
+#include "CryptoManager.h"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     QCoreApplication app(argc, argv);
 
-    QTextStream in(stdin);
-    QTextStream out(stdout);
-    QTextStream err(stderr);
-
-    const QStringList args = app.arguments();
-
-    if (args.size() != 3) {
-        out << "Usage:\n"
-            << "  " << args.value(0) << " <folder_path> <password>\n";
+    if (argc != 4) {
+        QTextStream err(stderr);
+        err << "Usage: " << argv[0] << " <path> <encrypt|decrypt> <password>" << Qt::endl;
         return 1;
     }
 
-    const QString folderPath = args.at(1);
-    const QString password = args.at(2);
+    QString path = QString::fromLocal8Bit(argv[1]);
+    QString mode = QString::fromLocal8Bit(argv[2]).toLower();
+    QString password = QString::fromLocal8Bit(argv[3]);
 
-    out << "==== Data Protection System ====\n";
-    out << "1 - Encrypt folder\n";
-    out << "2 - Decrypt folder\n";
-    out << "Select option: ";
-    out.flush();
-
-    const QString choice = in.readLine().trimmed();
-
-    bool ok = false;
-
-    if (choice == "1") {
-        ok = CryptoManager::instance().encryptFolder(folderPath, password);
-    } else if (choice == "2") {
-        ok = CryptoManager::instance().decryptFolder(folderPath, password);
-    } else {
-        err << "Invalid option.\n";
-        return 2;
+    if (mode != "encrypt" && mode != "decrypt") {
+        QTextStream err(stderr);
+        err << "Invalid mode. Use 'encrypt' or 'decrypt'." << Qt::endl;
+        return 1;
     }
 
-    out << (ok ? "Done.\n" : "Done with errors.\n");
-    return ok ? 0 : 3;
+    bool encryptMode = (mode == "encrypt");
+
+    // Dependency Injection
+    ConsoleLogger logger;
+    Aes256Algorithm algo;
+    RecursivePathStepper stepper;
+
+    CryptoManager::instance().init(&logger, &algo);
+
+    QFileInfo fi(path);
+    if (!fi.exists()) {
+        logger.error(QString("Target path does not exist: %1").arg(path));
+        return 1;
+    }
+
+    std::vector<QString> filesToProcess;
+    if (fi.isFile()) {
+        filesToProcess.push_back(path);
+    } else if (fi.isDir()) {
+        filesToProcess = stepper.collectFiles(path);
+        if (filesToProcess.empty()) {
+            logger.info("Directory is empty. Nothing to process.");
+            return 0;
+        }
+    }
+
+    logger.info(QString("Processing %1 file(s) with algorithm: %2")
+                    .arg(filesToProcess.size())
+                    .arg(algo.name()));
+
+    // Обход и обработка каждого файла
+    for (const auto& file : filesToProcess) {
+        if (encryptMode) {
+            CryptoManager::instance().encryptFile(file, password);
+        } else {
+            CryptoManager::instance().decryptFile(file, password);
+        }
+    }
+
+    return 0;
 }
