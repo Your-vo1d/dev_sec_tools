@@ -43,7 +43,7 @@
 ---
 
 ## UML-диаграмма классов
-```mermaind
+```mermaid
 classDiagram
   class ILogger {
     <<interface>>
