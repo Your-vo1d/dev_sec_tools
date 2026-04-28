@@ -95,14 +95,14 @@ classDiagram
   Aes256Algorithm ..|> ICryptoAlgorithm
   RecursivePathStepper ..|> IPathStepper
 
-  CryptoManager o-- ILogger
-  CryptoManager o-- ICryptoAlgorithm
+  CryptoManager o-- ILogger : <<inject>>
+  CryptoManager o-- ICryptoAlgorithm : <<inject>>
 
-  main_cpp ..> ConsoleLogger
-  main_cpp ..> Aes256Algorithm
-  main_cpp ..> RecursivePathStepper
-  main_cpp ..> CryptoManager
-  main_cpp ..> IPathStepper 
+  main_cpp ..> ConsoleLogger : creates
+  main_cpp ..> Aes256Algorithm : creates
+  main_cpp ..> RecursivePathStepper : creates
+  main_cpp ..> CryptoManager : configures
+  main_cpp ..> IPathStepper : uses
 ```
 
 ## Сборка
