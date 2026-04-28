@@ -18,6 +18,15 @@ public:
     // Дешифрование всех файлов в папке и подпапках
     bool decryptFile(const QString &folderPath, const QString &password);
 
+#ifdef UNIT_TESTS
+    // Только для тестов: сброс состояния синглтона между тест-кейсами
+    static void resetForTesting() {
+        instance().logger = nullptr;
+        instance().algorithm = nullptr;
+    }
+    friend class CryptoTestSuite;
+#endif
+
 private:
     // Конструктор
     CryptoManager() = default;
@@ -31,5 +40,7 @@ private:
     ILogger* logger = nullptr;
     ICryptoAlgorithm* algorithm = nullptr;
 };
+
+
 
 #endif // CRYPTO_MANAGER_H

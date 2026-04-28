@@ -1,32 +1,42 @@
-QT = core
-
-CONFIG += c++17 cmdline
-
+# Общие настройки
+CONFIG += c++17 console
 INCLUDEPATH += include
-# You can make your code fail to compile if it uses deprecated APIs.
-# In order to do so, uncomment the following line.
-#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+LIBS += -lcryptopp
 
-SOURCES += \
-        src/Aes256Algorithm.cpp \
-        src/ConsoleLogger.cpp \
-        src/RecursivePathStepper.cpp \
-        src/CryptoManager.cpp \
-        src/main.cpp
+COMMON_SOURCES = \
+    src/ConsoleLogger.cpp \
+    src/Aes256Algorithm.cpp \
+    src/RecursivePathStepper.cpp \
+    src/CryptoManager.cpp
 
-# Default rules for deployment.
+COMMON_HEADERS = \
+    include/ConsoleLogger.h \
+    include/Aes256Algorithm.h \
+    include/RecursivePathStepper.h \
+    include/CryptoManager.h \
+    include/CryptoConfig.h \
+    include/ILogger.h \
+    include/ICryptoAlgorithm.h \
+    include/IPathStepper.h
+
+# По умолчанию собирается основное приложение
+build_tests {
+    TARGET = crypto_tests
+    QT += core testlib
+    CONFIG -= cmdline
+    DEFINES += UNIT_TESTS
+    SOURCES = $$COMMON_SOURCES src/tests.cpp
+    HEADERS = $$COMMON_HEADERS
+} else {
+    TARGET = crypto_app
+    QT += core
+    CONFIG += cmdline
+    SOURCES = $$COMMON_SOURCES src/main.cpp
+    HEADERS = $$COMMON_HEADERS
+}
+
+ CONFIG+=build_tests
+
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-HEADERS += \
-    include/Aes256Algorithm.h \
-    include/ConsoleLogger.h \
-    include/CryptoConfig.h \
-    include/ICryptoAlgorithm.h \
-    include/ILogger.h \
-    include/IPathStepper.h \
-    include/CryptoManager.h \
-    include/RecursivePathStepper.h
-
-LIBS += -lcryptopp
