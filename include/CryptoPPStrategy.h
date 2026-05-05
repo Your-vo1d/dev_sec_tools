@@ -1,7 +1,7 @@
-﻿#ifndef AES256ALGORITHM_H
-#define AES256ALGORITHM_H
+﻿#ifndef CRYPTOPPSTRATEGY_H
+#define CRYPTOPPSTRATEGY_H
 
-#include "ICryptoAlgorithm.h"
+#include "ICryptoStrategy.h"
 #include "CryptoConfig.h"
 #include <QByteArray>
 #include <QFile>
@@ -12,7 +12,7 @@
 #include <cryptopp/osrng.h>
 
 
-class Aes256Algorithm : public ICryptoAlgorithm {
+class CryptoPPStrategy : public ICryptoStrategy {
 public:
     QString name() const override;
     bool encrypt(const QString& path, const QString& password) override;
@@ -23,4 +23,4 @@ private:
     QByteArray computeHash(const QString& password) const;
 };
 
-#endif // AES256ALGORITHM_H
+#endif // CRYPTOPPSTRATEGY_H

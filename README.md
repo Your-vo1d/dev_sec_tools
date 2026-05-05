@@ -50,7 +50,7 @@ classDiagram
     +info(msg QString) void
     +error(msg QString) void
   }
-  class ICryptoAlgorithm {
+  class ICryptoStrategy {
     <<interface>>
     +encrypt(path QString, password QString) bool
     +decrypt(path QString, password QString) bool
@@ -66,7 +66,7 @@ classDiagram
     +info(msg QString) void
     +error(msg QString) void
   }
-  class Aes256Algorithm {
+  class CryptoPPStrategy {
     +encrypt(path QString, password QString) bool
     +decrypt(path QString, password QString) bool
     +isEncryptedFile(path QString) bool
@@ -80,11 +80,11 @@ classDiagram
   class CryptoManager {
     <<Singleton>>
     +instance() CryptoManager&
-    +init(logger ILogger*, algo ICryptoAlgorithm*) void
+    +init(logger ILogger*, algo ICryptoStrategy*) void
     +encryptFile(folderPath QString, password QString) bool
     +decryptFile(folderPath QString, password QString) bool
     -logger ILogger*
-    -algorithm ICryptoAlgorithm*
+    -algorithm ICryptoStrategy*
   }
 
   class main_cpp {
@@ -92,17 +92,16 @@ classDiagram
   }
 
   ConsoleLogger ..|> ILogger
-  Aes256Algorithm ..|> ICryptoAlgorithm
+  CryptoPPStrategy ..|> ICryptoStrategy
   RecursivePathStepper ..|> IPathStepper
 
   CryptoManager o-- ILogger : <<inject>>
-  CryptoManager o-- ICryptoAlgorithm : <<inject>>
+  CryptoManager o-- ICryptoStrategy : <<inject>>
 
   main_cpp ..> ConsoleLogger : creates
-  main_cpp ..> Aes256Algorithm : creates
+  main_cpp ..> CryptoPPStrategy : creates
   main_cpp ..> RecursivePathStepper : creates
   main_cpp ..> CryptoManager : configures
-  main_cpp ..> IPathStepper : uses
 ```
 
 ## Сборка

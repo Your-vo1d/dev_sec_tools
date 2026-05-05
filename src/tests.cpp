@@ -5,7 +5,7 @@
 
 #include "ConsoleLogger.h"
 #include "RecursivePathStepper.h"
-#include "Aes256Algorithm.h"
+#include "CryptoPPStrategy.h"
 #include "CryptoManager.h"
 
 class CryptoTestSuite : public QObject {
@@ -14,7 +14,7 @@ class CryptoTestSuite : public QObject {
 private:
     QTemporaryDir testDir;
     ConsoleLogger testLogger;
-    Aes256Algorithm testAlgo;
+    CryptoPPStrategy testAlgo;
     RecursivePathStepper testStepper;
 
     bool createTestFile(const QString& name, const QByteArray& data, QString& outPath) {

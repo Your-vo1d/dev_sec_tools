@@ -4,7 +4,7 @@
 #include <cstdio>
 
 #include "ConsoleLogger.h"
-#include "Aes256Algorithm.h"
+#include "CryptoPPStrategy.h"
 #include "RecursivePathStepper.h"
 #include "CryptoManager.h"
 
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 
     // Dependency Injection
     ConsoleLogger logger;
-    Aes256Algorithm algo;
+    CryptoPPStrategy algo;
     RecursivePathStepper stepper;
 
     CryptoManager::instance().init(&logger, &algo);

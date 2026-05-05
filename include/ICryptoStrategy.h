@@ -1,12 +1,12 @@
-﻿#ifndef ICRYPTOALGORITHM_H
-#define ICRYPTOALGORITHM_H
+﻿#ifndef ICRYPTOSTRATEGY_H
+#define ICRYPTOSTRATEGY_H
 
 #include <QString>
 
 
-class ICryptoAlgorithm {
+class ICryptoStrategy {
 public:
-    virtual ~ICryptoAlgorithm() = default;
+    virtual ~ICryptoStrategy() = default;
     virtual bool encrypt(const QString& path, const QString& password) = 0;
     virtual bool decrypt(const QString& path, const QString& password) = 0;
     virtual bool isEncryptedFile(const QString& path) const = 0;
@@ -14,4 +14,4 @@ public:
 };
 
 
-#endif // ICRYPTOALGORITHM_H
+#endif // ICRYPTOSTRATEGY_H
