@@ -5,11 +5,11 @@
 #include "CryptoConfig.h"
 #include <QByteArray>
 #include <QFile>
-#include <cryptopp/aes.h>
-#include <cryptopp/modes.h>
-#include <cryptopp/filters.h>
-#include <cryptopp/sha.h>
-#include <cryptopp/osrng.h>
+#include <aes.h>
+#include <modes.h>
+#include <filters.h>
+#include <sha.h>
+#include <osrng.h>
 
 
 class CryptoPPStrategy : public ICryptoStrategy {

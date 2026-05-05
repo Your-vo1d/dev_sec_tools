@@ -1,5 +1,5 @@
 ﻿#include "CryptoPPStrategy.h"
-#include <cryptopp/secblock.h>
+#include <secblock.h>
 
 
 QString CryptoPPStrategy::name() const { return "AES-256-CBC"; }

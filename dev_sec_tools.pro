@@ -1,6 +1,6 @@
 # Общие настройки
 CONFIG += c++17 console
-INCLUDEPATH += include
+INCLUDEPATH += include /usr/include/crypto++
 LIBS += -lcryptopp
 
 COMMON_SOURCES = \

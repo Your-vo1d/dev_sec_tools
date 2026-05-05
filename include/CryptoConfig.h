@@ -2,8 +2,8 @@
 #define CRYPTOCONFIG_H
 
 #pragma once
-#include <cryptopp/aes.h>
-#include <cryptopp/sha.h>
+#include <aes.h>
+#include <sha.h>
 
 namespace CryptoConfig {
     inline constexpr size_t IV_SIZE   = CryptoPP::AES::BLOCKSIZE;
