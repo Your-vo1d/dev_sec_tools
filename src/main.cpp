@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
         err << "Usage: " << argv[0] << " <path> <encrypt|decrypt> <password>" << Qt::endl;
         return 1;
     }
-
+    //Получение пути для шифрования/дешифрования, типа и пароля
     QString path = QString::fromLocal8Bit(argv[1]);
     QString mode = QString::fromLocal8Bit(argv[2]).toLower();
     QString password = QString::fromLocal8Bit(argv[3]);
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 
     bool encryptMode = (mode == "encrypt");
 
-    // Dependency Injection
+    // Создание логгера, степпера и алгоритма
     ConsoleLogger logger;
     CryptoPPStrategy algo;
     RecursivePathStepper stepper;
