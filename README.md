@@ -95,8 +95,8 @@ classDiagram
   CryptoPPStrategy ..|> ICryptoStrategy
   RecursivePathStepper ..|> IPathStepper
 
-  CryptoManager o-- ILogger : <<inject>>
-  CryptoManager o-- ICryptoStrategy : <<inject>>
+  CryptoManager --> ILogger : <<inject>>
+  CryptoManager o--> ICryptoStrategy : <<inject>>
 
   main_cpp ..> ConsoleLogger : creates
   main_cpp ..> CryptoPPStrategy : creates
