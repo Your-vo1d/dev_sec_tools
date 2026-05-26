@@ -1,10 +1,10 @@
-﻿#include "CryptoPPStrategy.h"
+#include "CryptoPlusPlus.h"
 #include <secblock.h>
 
 
-QString CryptoPPStrategy::name() const { return "AES-256-CBC"; }
+QString CryptoPlusPlus::name() const { return "AES-256-CBC"; }
 
-QByteArray CryptoPPStrategy::computeHash(const QString& password) const {
+QByteArray CryptoPlusPlus::computeHash(const QString& password) const {
     QByteArray pwdUtf8 = password.toUtf8();
     QByteArray hash(CryptoConfig::HASH_SIZE, 0);
     CryptoPP::SHA256().CalculateDigest(
@@ -15,7 +15,7 @@ QByteArray CryptoPPStrategy::computeHash(const QString& password) const {
     return hash;
 }
 
-bool CryptoPPStrategy::isEncryptedFile(const QString& path) const {
+bool CryptoPlusPlus::isEncryptedFile(const QString& path) const {
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly)) return false;
     QByteArray header = f.read(4);
@@ -23,7 +23,7 @@ bool CryptoPPStrategy::isEncryptedFile(const QString& path) const {
     return (header.size() == 4 && header == QByteArray(CryptoConfig::MAGIC_HEADER));
 }
 
-bool CryptoPPStrategy::encrypt(const QString& path, const QString& password) {
+bool CryptoPlusPlus::encrypt(const QString& path, const QString& password) {
     if (isEncryptedFile(path)) return false;
 
     QFile f(path);
@@ -69,7 +69,7 @@ bool CryptoPPStrategy::encrypt(const QString& path, const QString& password) {
     return true;
 }
 
-bool CryptoPPStrategy::decrypt(const QString& path, const QString& password) {
+bool CryptoPlusPlus::decrypt(const QString& path, const QString& password) {
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly)) return false;
     QByteArray data = f.readAll();

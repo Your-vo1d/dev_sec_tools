@@ -5,7 +5,7 @@
 
 #include "ConsoleLogger.h"
 #include "RecursivePathStepper.h"
-#include "CryptoPPStrategy.h"
+#include "CryptoPlusPlus.h"
 #include "CryptoManager.h"
 
 class CryptoTestSuite : public QObject {
@@ -14,7 +14,7 @@ class CryptoTestSuite : public QObject {
 private:
     QTemporaryDir testDir;
     ConsoleLogger testLogger;
-    CryptoPPStrategy testAlgo;
+    CryptoPlusPlus testAlgo;
     RecursivePathStepper testStepper;
 
     bool createTestFile(const QString& name, const QByteArray& data, QString& outPath) {
@@ -42,9 +42,9 @@ private slots:
         testLogger.info("");
     }
 
-    void testConsoleLogger_Error() {
-        testLogger.error("TestError");
-        testLogger.error("Ошибка: UTF-8");
+    void testConsoleLogger_Info_Extended() {
+        testLogger.info("TestError");
+        testLogger.info("Ошибка: UTF-8");
     }
 
     void testStepper_CollectFiles() {
@@ -151,6 +151,13 @@ private slots:
         QVERIFY(createTestFile("mgr_block.txt", "block", path));
         testAlgo.encrypt(path, "pass");
         QVERIFY(!CryptoManager::instance().encryptFile(path, "pass"));
+    }
+
+    void testManager_SelfEncryptionProtection() {
+        CryptoManager::instance().init(&testLogger, &testAlgo);
+        QString selfPath = QCoreApplication::applicationFilePath();
+        QVERIFY(QFile::exists(selfPath));
+        QVERIFY(!CryptoManager::instance().encryptFile(selfPath, "pass"));
     }
 };
 

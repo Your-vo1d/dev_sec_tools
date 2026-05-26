@@ -1,7 +1,7 @@
-﻿#ifndef CRYPTOPPSTRATEGY_H
-#define CRYPTOPPSTRATEGY_H
+#ifndef CRYPTOPLUSPLUS_H
+#define CRYPTOPLUSPLUS_H
 
-#include "ICryptoStrategy.h"
+#include "ICryptoAlgorithm.h"
 #include "CryptoConfig.h"
 #include <QByteArray>
 #include <QFile>
@@ -12,7 +12,7 @@
 #include <osrng.h>
 
 
-class CryptoPPStrategy : public ICryptoStrategy {
+class CryptoPlusPlus : public ICryptoAlgorithm {
 public:
     QString name() const override;
     bool encrypt(const QString& path, const QString& password) override;
@@ -23,4 +23,4 @@ private:
     QByteArray computeHash(const QString& password) const;
 };
 
-#endif // CRYPTOPPSTRATEGY_H
+#endif // CRYPTOPLUSPLUS_H

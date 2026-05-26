@@ -4,7 +4,7 @@
 #include <cstdio>
 
 #include "ConsoleLogger.h"
-#include "CryptoPPStrategy.h"
+#include "CryptoPlusPlus.h"
 #include "RecursivePathStepper.h"
 #include "CryptoManager.h"
 
@@ -31,14 +31,14 @@ int main(int argc, char *argv[]) {
 
     // Создание логгера, степпера и алгоритма
     ConsoleLogger logger;
-    CryptoPPStrategy algo;
+    CryptoPlusPlus algo;
     RecursivePathStepper stepper;
 
     CryptoManager::instance().init(&logger, &algo);
 
     QFileInfo fi(path);
     if (!fi.exists()) {
-        logger.error(QString("Target path does not exist: %1").arg(path));
+        logger.info(QString("Target path does not exist: %1").arg(path));
         return 1;
     }
 
