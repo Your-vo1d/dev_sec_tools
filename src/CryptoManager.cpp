@@ -7,7 +7,7 @@ CryptoManager& CryptoManager::instance() {
     return inst;
 }
 
-void CryptoManager::init(ILogger* log, ICryptoStrategy* algo) {
+void CryptoManager::init(ILogger* log, ICryptoAlgorithm* algo) {
     logger = log;
     algorithm = algo;
 }

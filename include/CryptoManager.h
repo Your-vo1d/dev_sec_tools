@@ -3,7 +3,7 @@
 
 #include <QString>
 #include "ILogger.h"
-#include "ICryptoStrategy.h"
+#include "ICryptoAlgorithm.h"
 
 
 class CryptoManager final
@@ -11,7 +11,7 @@ class CryptoManager final
 public:
     // Получение единственного экземпляра
     static CryptoManager &instance();
-    void init(ILogger* log, ICryptoStrategy* algo);
+    void init(ILogger* log, ICryptoAlgorithm* algo);
     // Шифрование всех файлов в папке и подпапках
     bool encryptFile(const QString &folderPath, const QString &password);
 
@@ -38,7 +38,7 @@ private:
     CryptoManager &operator=(const CryptoManager &) = delete;
 
     ILogger* logger = nullptr;
-    ICryptoStrategy* algorithm = nullptr;
+    ICryptoAlgorithm* algorithm = nullptr;
 };
 
 

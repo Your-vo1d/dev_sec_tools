@@ -5,18 +5,18 @@ LIBS += -lcryptopp
 
 COMMON_SOURCES = \
     src/ConsoleLogger.cpp \
-    src/CryptoPPStrategy.cpp \
+    src/CryptoPlusPlus.cpp \
     src/RecursivePathStepper.cpp \
     src/CryptoManager.cpp
 
 COMMON_HEADERS = \
     include/ConsoleLogger.h \
-    include/CryptoPPStrategy.h \
+    include/CryptoPlusPlus.h \
     include/RecursivePathStepper.h \
     include/CryptoManager.h \
     include/CryptoConfig.h \
     include/ILogger.h \
-    include/ICryptoStrategy.h \
+    include/ICryptoAlgorithm.h \
     include/IPathStepper.h
 
 # По умолчанию собирается основное приложение
