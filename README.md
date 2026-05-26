@@ -48,9 +48,8 @@ classDiagram
   class ILogger {
     <<interface>>
     +info(msg QString) void
-    +error(msg QString) void
   }
-  class ICryptoStrategy {
+  class ICryptoAlgorithm {
     <<interface>>
     +encrypt(path QString, password QString) bool
     +decrypt(path QString, password QString) bool
@@ -64,9 +63,8 @@ classDiagram
 
   class ConsoleLogger {
     +info(msg QString) void
-    +error(msg QString) void
   }
-  class CryptoPPStrategy {
+  class CryptoPlusPlus {
     +encrypt(path QString, password QString) bool
     +decrypt(path QString, password QString) bool
     +isEncryptedFile(path QString) bool
@@ -80,11 +78,11 @@ classDiagram
   class CryptoManager {
     <<Singleton>>
     +instance() CryptoManager&
-    +init(logger ILogger*, algo ICryptoStrategy*) void
+    +init(logger ILogger*, algo ICryptoAlgorithm*) void
     +encryptFile(folderPath QString, password QString) bool
     +decryptFile(folderPath QString, password QString) bool
     -logger ILogger*
-    -algorithm ICryptoStrategy*
+    -algorithm ICryptoAlgorithm*
   }
 
   class main_cpp {
@@ -92,14 +90,14 @@ classDiagram
   }
 
   ConsoleLogger ..|> ILogger
-  CryptoPPStrategy ..|> ICryptoStrategy
+  CryptoPlusPlus ..|> ICryptoAlgorithm
   RecursivePathStepper ..|> IPathStepper
 
-  CryptoManager o-- ILogger : <<inject>>
-  CryptoManager o-- ICryptoStrategy : <<inject>>
+  CryptoManager --> ILogger : <<use>>
+  CryptoManager o-- ICryptoAlgorithm : <<inject>>
 
   main_cpp ..> ConsoleLogger : creates
-  main_cpp ..> CryptoPPStrategy : creates
+  main_cpp ..> CryptoPlusPlus : creates
   main_cpp ..> RecursivePathStepper : creates
   main_cpp ..> CryptoManager : configures
 ```
@@ -165,8 +163,8 @@ make clean && make -j$(nproc)
 ```
 [INFO] Processing 5 file(s) with algorithm: AES-256-CBC
 [INFO] Encryption successful: /path/to/file.txt
-[ERROR] File is already encrypted. Re-encryption prohibited: /path/to/encrypted.txt
-[ERROR] Decryption failed (wrong key or corrupt data): /path/to/file.txt
+[INFO] File is already encrypted. Re-encryption prohibited: /path/to/encrypted.txt
+[INFO] Decryption failed (wrong key or corrupt data): /path/to/file.txt
 ```
 
 ---
@@ -190,18 +188,18 @@ make clean && make
 
 | № | Сценарий | Входные данные | Ожидаемый результат | Команда |
 |---|----------|----------------|---------------------|---------|
-| 1 | Шифрование одного файла | Папка с 1 файлом, режим `encrypt`, пароль `123` | Файл зашифрован, начинается с `ENC!` | `./crypto_app encrypt ../testing/one_file_dir 123` |
-| 2 | Шифрование вложенных папок | Папка с подпапками, режим `encrypt` | Все файлы рекурсивно зашифрованы | `./crypto_app encrypt ../testing/ 123` |
+| 1 | Шифрование одного файла | Папка с 1 файлом, режим `encrypt`, пароль `123` | Файл зашифрован, начинается с `ENC!` | `./crypto_app testing/one_file_dir encrypt 123` |
+| 2 | Шифрование вложенных папок | Папка с подпапками, режим `encrypt` | Все файлы рекурсивно зашифрованы | `./crypto_app testing/nested encrypt 123` |
 | 3 | Дешифрование одного файла | Зашифрованный файл, верный пароль | Файл восстановлен, идентичен оригиналу | `encrypt → decrypt` с одним паролем |
-| 4 | Дешифрование вложенных папок | Зашифрованная структура, верный пароль | Все файлы восстановлены | `encrypt ../testing/ → decrypt ../testing/` |
-| 5 | Блокировка повторного шифрования | Уже зашифрованный файл, режим `encrypt` | Ошибка: `File is already encrypted` | Дважды `encrypt` с одним паролем |
-| 6 | Защита от дешифрования обычного файла | Не зашифрованный файл, режим `decrypt` | Ошибка: `File is not encrypted` | `./crypto_app decrypt plain.txt 123` |
-| 7 | Пустая директория | Пустая папка, режим `encrypt` | Сообщение: `Directory is empty`, выход 0 | `./crypto_app encrypt ../empty/ 123` |
-| 8 | Несуществующий путь (шифрование) | `/tmp/missing`, режим `encrypt` | Ошибка: `Path does not exist` | `./crypto_app encrypt /tmp/missing 123` |
-| 9 | Несуществующий путь (дешифрование) | `/tmp/missing`, режим `decrypt` | Ошибка: `Path does not exist` | `./crypto_app decrypt /tmp/missing 123` |
+| 4 | Дешифрование вложенных папок | Зашифрованная структура, верный пароль | Все файлы восстановлены | `./crypto_app testing/nested encrypt 123` → `./crypto_app testing/nested decrypt 123` |
+| 5 | Блокировка повторного шифрования | Уже зашифрованный файл, режим `encrypt` | `[INFO] File is already encrypted` | Дважды `encrypt` с одним паролем |
+| 6 | Защита от дешифрования обычного файла | Не зашифрованный файл, режим `decrypt` | `[INFO] File is not encrypted` | `./crypto_app decrypt plain.txt 123` |
+| 7 | Пустая директория | Пустая папка, режим `encrypt` | `[INFO] Directory is empty`, выход 0 | `./crypto_app encrypt testing/empty 123` |
+| 8 | Несуществующий путь (шифрование) | `/tmp/missing`, режим `encrypt` | `[INFO] Path does not exist` | `./crypto_app encrypt /tmp/missing 123` |
+| 9 | Несуществующий путь (дешифрование) | `/tmp/missing`, режим `decrypt` | `[INFO] Path does not exist` | `./crypto_app decrypt /tmp/missing 123` |
 | 10 | Отсутствие пути в аргументах | Только режим `decrypt` | Ошибка: `Invalid arguments` | `./crypto_app decrypt` |
 | 11 | Отсутствие всех аргументов | Запуск без параметров | Ошибка: `Usage: ...` | `./crypto_app` |
 | 12 | Некорректный режим | Режим `шифр` вместо `encrypt` | Ошибка: `Invalid mode` | `./crypto_app шифр ../testing/ 123` |
-| 13 | Неверный пароль при дешифровании | Зашифрованный файл, пароль `1234` вместо `123` | Ошибка: `wrong key`, файл не изменён | `encrypt 123 → decrypt 1234` |
+| 13 | Неверный пароль при дешифровании | Зашифрованный файл, пароль `1234` вместо `123` | `[INFO] Decryption failed (wrong key...)`, файл не изменён | `encrypt 123 → decrypt 1234` |
 | 14 | Пропуск ярлыков (Windows) | Папка с файлом и `.lnk`, режим `encrypt` | Ярлык не обрабатывается, файл зашифрован | `./crypto_app encrypt ../with_link/ 123` |
 | 15 | Пропуск системных файлов | Папка с текстовыми и системными файлами | Шифруются только текстовые файлы | `./crypto_app encrypt ../mixed/ 123` |
