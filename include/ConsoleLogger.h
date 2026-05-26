@@ -10,7 +10,6 @@ public:
     ConsoleLogger() = default;
 
     void info(const QString& msg) override;
-    void error(const QString& msg) override;
 };
 
 
